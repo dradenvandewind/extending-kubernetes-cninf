@@ -1,0 +1,10 @@
+apiVersion: mycninf.test.erwanleblond.com/v1apha1
+kind: ObjStore
+metadata:
+  labels:
+    app.kubernetes.io/name: mycninf
+    app.kubernetes.io/managed-by: kustomize
+  name: crd-elb-01
+spec:
+  name: crd-elb-live-extk8s-01
+  locked: false

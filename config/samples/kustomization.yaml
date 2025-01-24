@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- mycninf_v1apha1_objstore.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

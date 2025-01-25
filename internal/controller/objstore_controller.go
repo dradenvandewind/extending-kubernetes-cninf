@@ -144,16 +144,38 @@ func (r ObjStoreReconciler) createResources(ctx context.Context, objStore *mycni
 }
 
 func (r *ObjStoreReconciler) deleteResource(ctx context.Context, objStore *mycninfv1apha1.ObjStore) error {
+	// Check bucket name
 	if objStore.Spec.Name == "" {
 		return fmt.Errorf("bucket name is empty, cannot delete resource")
 	}
 
+	//delete the S3 bucket
 	_, err := r.S3svc.DeleteBucket(&s3.DeleteBucketInput{
 		Bucket: aws.String(objStore.Spec.Name),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to delete S3 bucket %s: %w", objStore.Spec.Name, err)
 	}
-	
+
+	// check  namespace
+	if objStore.Namespace == "" {
+		return fmt.Errorf("namespace is empty, cannot delete ConfigMap for resource %s", objStore.Spec.Name)
+	}
+
+	//Now delete the config map
+	configmap := &v1.ConfigMap{}
+	err = r.Get(ctx, client.ObjectKey{
+		Name:      fmt.Sprintf(configMapName, objStore.Spec.Name),
+		Namespace: objStore.Namespace,
+	}, configmap)
+	if err != nil {
+		return fmt.Errorf("failed to get ConfigMap %s in namespace %s: %w", fmt.Sprintf(configMapName, objStore.Spec.Name), objStore.Namespace, err)
+	}
+
+	err = r.Delete(ctx, configmap)
+	if err != nil {
+		return fmt.Errorf("failed to delete ConfigMap %s in namespace %s: %w", fmt.Sprintf(configMapName, objStore.Spec.Name), objStore.Namespace, err)
+	}
+
 	return nil
 }

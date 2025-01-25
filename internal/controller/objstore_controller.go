@@ -23,6 +23,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,7 +33,10 @@ import (
 	mycninfv1apha1 "github.com/dradenvandewind/extending-kubernetes-cninf.git/api/v1apha1"
 )
 
-const configMapName = "%s-cm"
+const (
+	configMapName = "%s-cm"
+	finalizer     = "objstores.mycninf.elb.erwanleblond.com/finalizer"
+)
 
 // ObjStoreReconciler reconciles a ObjStore object
 type ObjStoreReconciler struct {
@@ -69,13 +73,41 @@ func (r *ObjStoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	// Initialize status if empty
-	if instance.Status.State == "" {
-		instance.Status.State = mycninfv1apha1.PendingState
-		if err := r.Status().Update(ctx, instance); err != nil {
-			log.Error(err, "Failed to update status to PENDING_STATE", "ObjStore", instance.Name)
-			return ctrl.Result{}, err
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		if instance.Status.State == "" {
+			instance.Status.State = mycninfv1apha1.PendingState
+			if err := r.Status().Update(ctx, instance); err != nil {
+				log.Error(err, "Failed to update status to PENDING_STATE", "ObjStore", instance.Name)
+				return ctrl.Result{}, err
+			}
+			log.Info("Initialized ObjStore status to PENDING_STATE", "ObjStore", instance.Name)
+			controllerutil.AddFinalizer(instance, finalizer)
+			if err := r.Update(ctx, instance); err != nil {
+				if instance.Status.State == mycninfv1apha1.PendingState {
+					log.Info("stating to create resources")
+					if err := r.createResources(ctx, instance); err != nil {
+						instance.Status.State = mycninfv1apha1.ErrorState
+						r.Status().Update(ctx, instance)
+						log.Error(err, "error creating bucket")
+						return ctrl.Result{}, err
+					}
+				}
+				return ctrl.Result{}, err
+			}
+		} else {
+			log.Info("deletion flow")
+			if err := r.deleteResource(ctx, instance); err != nil {
+				instance.Status.State = mycninfv1apha1.ErrorState
+				r.Status().Update(ctx, instance)
+				log.Error(err, "error deleting bucket")
+				return ctrl.Result{}, err
+			}
+			controllerutil.RemoveFinalizer(instance, finalizer)
+			if err := r.Update(ctx, instance); err != nil {
+				return ctrl.Result{}, err
+			}
 		}
-		log.Info("Initialized ObjStore status to PENDING_STATE", "ObjStore", instance.Name)
+
 	}
 
 	// TODO: Implement custom reconciliation logic

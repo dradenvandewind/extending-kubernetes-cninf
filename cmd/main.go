@@ -21,7 +21,6 @@ import (
 	"errors"
 	"flag"
 	"github.com/aws/aws-sdk-go/aws"
-
 	"github.com/aws/aws-sdk-go/aws/credentials"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -214,16 +213,25 @@ func main() {
 	if !ok {
 		setupLog.Error(errors.New("load aws access key failed"), "unable to load environment")
 		os.Exit(2)
+	} else {
+		setupLog.Info("load aws access key success")
 	}
 	secret, ok := os.LookupEnv("AWS_SECRET_ACCESS_KEY")
 	if !ok {
-		setupLog.Error(errors.New("load aws access key failed"), "unable to load environment")
+		setupLog.Error(errors.New("load aws secret access key failed"), "unable to load environment")
 		os.Exit(2)
+	} else {
+		setupLog.Info("load aws secret access key success")
 	}
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
 		Credentials: credentials.NewStaticCredentials(id, secret, ""),
 	})
+	if err != nil {
+		setupLog.Error(errors.New("new s3 session failed"), "new s3 session failed")
+	} else {
+		setupLog.Info("S3 SESSION success")
+	}
 
 	if err = (&controller.ObjStoreReconciler{
 		Client: mgr.GetClient(),

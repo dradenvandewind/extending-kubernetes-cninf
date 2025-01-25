@@ -95,12 +95,16 @@ func (r *ObjStoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r ObjStoreReconciler) createResources(ctx context.Context, objStore *mycninfv1apha1.ObjStore) error {
+	log := log.FromContext(ctx)
 	// update first status
 	objStore.Status.State = mycninfv1apha1.CreatingState
 	err := r.Status().Update(ctx, objStore)
 	if err != nil {
 		return err
+	} else {
+		log.Info("createResources PENDING_STATE", "ObjStore", objStore.Status.State)
 	}
+
 	// create bucket
 	b, err := r.S3svc.CreateBucket(&s3.CreateBucketInput{
 		Bucket:                     aws.String(objStore.Spec.Name),
@@ -138,7 +142,10 @@ func (r ObjStoreReconciler) createResources(ctx context.Context, objStore *mycni
 	err = r.Status().Update(ctx, objStore)
 	if err != nil {
 		return err
+	} else {
+		log.Info("createResources config map", "ObjStore", objStore.Status.State)
 	}
+
 	return nil
 
 }

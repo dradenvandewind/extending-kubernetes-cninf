@@ -47,7 +47,30 @@ type ObjStoreReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.0/pkg/reconcile
 func (r *ObjStoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := log.FromContext(ctx)
+
+	// Fetch the ObjStore instance
+	instance := &mycninfv1apha1.ObjStore{}
+	if err := r.Get(ctx, req.NamespacedName, instance); err != nil {
+		if client.IgnoreNotFound(err) != nil {
+			log.Error(err, "Failed to get ObjStore resource", "NamespacedName", req.NamespacedName)
+		}
+		// Return without requeueing if the resource is not found (deleted)
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	// Initialize status if empty
+	if instance.Status.State == "" {
+		instance.Status.State = mycninfv1apha1.PendingState
+		if err := r.Status().Update(ctx, instance); err != nil {
+			log.Error(err, "Failed to update status to PENDING_STATE", "ObjStore", instance.Name)
+			return ctrl.Result{}, err
+		}
+		log.Info("Initialized ObjStore status to PENDING_STATE", "ObjStore", instance.Name)
+	}
+
+	// TODO: Implement custom reconciliation logic
+	log.Info("Reconcile logic is not yet implemented", "ObjStore", instance.Name)
 
 	// TODO(user): your logic here
 

@@ -20,6 +20,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	PendingState  = "PENDING"
+	CreatedState  = "CREATED"
+	CreatingState = "CREATING"
+	ErrorState    = "ERROR"
+)
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -35,12 +42,14 @@ type ObjStoreSpec struct {
 
 // ObjStoreStatus defines the observed state of ObjStore.
 type ObjStoreStatus struct {
+	State string `json:"state,omitempty"`
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:print column:name="State",type=string,JSONPATH=".status.state"
 
 // ObjStore is the Schema for the objstores API.
 type ObjStore struct {

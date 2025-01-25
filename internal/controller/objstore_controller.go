@@ -18,6 +18,11 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,10 +32,13 @@ import (
 	mycninfv1apha1 "github.com/dradenvandewind/extending-kubernetes-cninf.git/api/v1apha1"
 )
 
+const configMapName = "%s-cm"
+
 // ObjStoreReconciler reconciles a ObjStore object
 type ObjStoreReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	S3svc  *s3.S3
 }
 
 // +kubebuilder:rbac:groups=mycninf.test.erwanleblond.com,resources=objstores,verbs=get;list;watch;create;update;patch;delete

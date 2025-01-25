@@ -44,6 +44,7 @@ type ObjStoreReconciler struct {
 // +kubebuilder:rbac:groups=mycninf.test.erwanleblond.com,resources=objstores,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=mycninf.test.erwanleblond.com,resources=objstores/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=mycninf.test.erwanleblond.com,resources=objstores/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -91,4 +92,28 @@ func (r *ObjStoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&mycninfv1apha1.ObjStore{}).
 		Named("objstore").
 		Complete(r)
+}
+
+func (r ObjStoreReconciler) createResources(ctx context.Context, objStore *mycninfv1apha1.ObjStore) error {
+	// update first status
+	objStore.Status.State = mycninfv1apha1.CreatingState
+	err := r.Status().Update(ctx, objStore)
+	if err != nil {
+		return err
+	}
+	// create bucket
+	b, err := r.S3svc.CreateBucket(&s3.CreateBucketInput{
+		Bucket:                     aws.String(objStore.Spec.Name),
+		ObjectLockEnabledForBucket: aws.Bool(objStore.Spec.Locked),
+	})
+	if err != nil {
+		return err
+	}
+	// wait for it to be created
+	err := r.S3svc.WaitUntilBucketExists(&s3.HeadBucketInput{Bucket: aws.String(objStore.Spec.Name)})
+	if err != nil {
+		return err
+
+	}
+	
 }

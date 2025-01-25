@@ -115,5 +115,24 @@ func (r ObjStoreReconciler) createResources(ctx context.Context, objStore *mycni
 		return err
 
 	}
+	// create config map
+	data := make(map[String]string, 0)
+	data["bucketName"] = objStore.Spec.Name
+	data["location"] = *b.Location
+	configmap := &v1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf(configMapName, objStore.Spec.Name),
+			Namespace: objStore.Namespace,
+		},
+		Data: data,
+	}
+	err = r.Create(ctx, configmap)
+	if err != nil {
+		return err
+	}
 	
 }

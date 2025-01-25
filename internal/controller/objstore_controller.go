@@ -134,5 +134,11 @@ func (r ObjStoreReconciler) createResources(ctx context.Context, objStore *mycni
 	if err != nil {
 		return err
 	}
-	
+	objStore.Status.State = mycninfv1apha1.CreatedState
+	err = r.Status().Update(ctx, objStore)
+	if err != nil {
+		return err
+	}
+	return nil
+
 }

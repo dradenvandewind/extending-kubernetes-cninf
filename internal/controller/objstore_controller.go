@@ -142,3 +142,18 @@ func (r ObjStoreReconciler) createResources(ctx context.Context, objStore *mycni
 	return nil
 
 }
+
+func (r *ObjStoreReconciler) deleteResource(ctx context.Context, objStore *mycninfv1apha1.ObjStore) error {
+	if objStore.Spec.Name == "" {
+		return fmt.Errorf("bucket name is empty, cannot delete resource")
+	}
+
+	_, err := r.S3svc.DeleteBucket(&s3.DeleteBucketInput{
+		Bucket: aws.String(objStore.Spec.Name),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete S3 bucket %s: %w", objStore.Spec.Name, err)
+	}
+	
+	return nil
+}

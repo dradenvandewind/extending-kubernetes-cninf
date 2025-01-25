@@ -110,13 +110,13 @@ func (r ObjStoreReconciler) createResources(ctx context.Context, objStore *mycni
 		return err
 	}
 	// wait for it to be created
-	err := r.S3svc.WaitUntilBucketExists(&s3.HeadBucketInput{Bucket: aws.String(objStore.Spec.Name)})
+	err = r.S3svc.WaitUntilBucketExists(&s3.HeadBucketInput{Bucket: aws.String(objStore.Spec.Name)})
 	if err != nil {
 		return err
 
 	}
 	// create config map
-	data := make(map[String]string, 0)
+	data := make(map[string]string, 0)
 	data["bucketName"] = objStore.Spec.Name
 	data["location"] = *b.Location
 	configmap := &v1.ConfigMap{

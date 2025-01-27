@@ -64,7 +64,21 @@ spec:
           - --leader-elect
           - --health-probe-bind-address=:8081
         image: controller:latest
+        imagePullPolicy: IfNotPresent
         name: manager
+        env:
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: AWS_ACCESS_KEY_ID
+                name: objstore-secret
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: AWS_SECRET_ACCESS_KEY
+                name: objstore-secret
+
+
         ports: []
         securityContext:
           allowPrivilegeEscalation: false

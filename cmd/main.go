@@ -224,7 +224,7 @@ func main() {
 		setupLog.Info("load aws secret access key success")
 	}
 	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String("us-east-1"),
+		Region:      aws.String("eu-north-1"),
 		Credentials: credentials.NewStaticCredentials(id, secret, ""),
 	})
 	if err != nil {

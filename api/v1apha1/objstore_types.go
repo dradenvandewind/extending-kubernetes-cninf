@@ -49,7 +49,7 @@ type ObjStoreStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:print column:name="State",type=string,JSONPATH=".status.state"
+// +kubebuilder:print-column:name="State",type=string,JSONPATH=".status.state"
 
 // ObjStore is the Schema for the objstores API.
 type ObjStore struct {
